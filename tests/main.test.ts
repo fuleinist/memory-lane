@@ -1,6 +1,6 @@
-import { describe, it, expect } from '@jest/globals';
-import { isGitRepo } from '../src/lib/git.js';
-import { searchJournal } from '../src/lib/journal.js';
+import { describe, it, expect } from 'vitest';
+import { isGitRepo } from '../src/lib/git.ts';
+import { searchJournal } from '../src/lib/journal.ts';
 
 describe('MemoryLane', () => {
   describe('git operations', () => {
