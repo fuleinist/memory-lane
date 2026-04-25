@@ -1,9 +1,38 @@
 import type { SessionContext } from '../types.js';
 import { loadConfig } from './config.js';
+import type { WeekSummaryEntry } from './journal.js';
 
 interface LLMResponse {
   summary: string;
   error?: string;
+}
+
+export async function summarizeWeek(entries: WeekSummaryEntry[]): Promise<string> {
+  const config = loadConfig();
+  const prompt = buildWeekPrompt(entries);
+
+  if (config.provider === 'ollama') {
+    return await callOllama(prompt, config);
+  } else if (config.provider === 'openai') {
+    return await callOpenAI(prompt, config);
+  } else if (config.provider === 'anthropic') {
+    return await callAnthropic(prompt, config);
+  }
+
+  throw new Error(`Unknown provider: ${config.provider}`);
+}
+
+function buildWeekPrompt(entries: WeekSummaryEntry[]): string {
+  const dayList = entries
+    .map(e => `  - [${e.date}] ${e.summary}`)
+    .join('\n');
+
+  return `You are a developer journaling assistant. Generate a concise weekly summary (3-4 sentences) that captures the overall themes and highlights of the week's coding work. Group related activities together and identify the main focus areas. Be specific — avoid generic phrases like "worked on various tasks."
+
+## Daily Entries:
+${dayList}
+
+Write a focused weekly summary that a developer would want to review for a weekly standup or code review meeting.`;
 }
 
 export async function summarizeSession(context: SessionContext): Promise<string> {

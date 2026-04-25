@@ -1,12 +1,68 @@
 import { Command } from 'commander';
 import { loadConfig, findConfigDir } from '../lib/config.js';
 import { getSessionContext, readLastRunFile, writeLastRunFile, isGitRepo } from '../lib/git.js';
-import { appendEntry } from '../lib/journal.js';
-import { summarizeSession } from '../lib/summarizer.js';
-import { format } from 'date-fns';
+import { appendEntry, getWeekEntries, writeWeekSummary } from '../lib/journal.js';
+import { summarizeSession, summarizeWeek } from '../lib/summarizer.js';
+import { format, startOfWeek, endOfWeek } from 'date-fns';
 export const runCommand = new Command('run')
     .description('Run the MemoryLane journaling loop')
-    .action(async () => {
+    .option('--week', 'Generate a weekly summary instead of a daily entry')
+    .action(async (opts) => {
+    if (opts.week) {
+        return runWeeklySummary();
+    }
+    return runDaily();
+});
+async function runWeeklySummary() {
+    console.log('MemoryLane — Generating weekly summary...\n');
+    const configDir = findConfigDir();
+    if (!configDir) {
+        console.error('Error: No .memorylanerc found. Run `memory-lane init` first.');
+        process.exit(1);
+    }
+    const now = new Date();
+    const weekStart = startOfWeek(now, { weekStartsOn: 1 }); // Monday
+    const weekEnd = endOfWeek(now, { weekStartsOn: 1 }); // Sunday
+    const startStr = format(weekStart, 'yyyy-MM-dd');
+    const endStr = format(weekEnd, 'yyyy-MM-dd');
+    console.log(`Scanning journal entries from ${startStr} to ${endStr}...`);
+    let entries;
+    try {
+        entries = getWeekEntries(startStr, endStr);
+    }
+    catch (err) {
+        console.error('Error reading journal entries:', err.message);
+        process.exit(1);
+    }
+    if (entries.length === 0) {
+        console.log('No journal entries found for this week. Run `memory-lane run` first.');
+        process.exit(1);
+    }
+    console.log(`Found ${entries.length} journal ${entries.length === 1 ? 'entry' : 'entries'} for this week.`);
+    let summary;
+    try {
+        summary = await summarizeWeek(entries);
+    }
+    catch (err) {
+        console.error('Error calling LLM:', err.message);
+        process.exit(1);
+    }
+    console.log(`\nWeekly AI Summary: ${summary}`);
+    try {
+        writeWeekSummary({
+            weekStart: startStr,
+            weekEnd: endStr,
+            summary,
+            entries,
+        });
+    }
+    catch (err) {
+        console.error('Error writing weekly summary:', err.message);
+        process.exit(1);
+    }
+    console.log('\nDone!');
+}
+async function runDaily() {
     console.log('MemoryLane running...\n');
     // Check we're in a git repo
     const isGit = await isGitRepo();
@@ -65,5 +121,5 @@ export const runCommand = new Command('run')
     // Update last run
     writeLastRunFile(configDir, new Date().toISOString());
     console.log('\nDone!');
-});
+}
 //# sourceMappingURL=run.js.map

@@ -35,6 +35,10 @@ export interface SessionContext {
     changes: GitChange[];
     uncommittedDiff: string;
 }
+export interface SearchOptions {
+    from?: string;
+    to?: string;
+}
 export interface JournalEntry {
     date: string;
     summary: string;

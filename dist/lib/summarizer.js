@@ -1,4 +1,29 @@
 import { loadConfig } from './config.js';
+export async function summarizeWeek(entries) {
+    const config = loadConfig();
+    const prompt = buildWeekPrompt(entries);
+    if (config.provider === 'ollama') {
+        return await callOllama(prompt, config);
+    }
+    else if (config.provider === 'openai') {
+        return await callOpenAI(prompt, config);
+    }
+    else if (config.provider === 'anthropic') {
+        return await callAnthropic(prompt, config);
+    }
+    throw new Error(`Unknown provider: ${config.provider}`);
+}
+function buildWeekPrompt(entries) {
+    const dayList = entries
+        .map(e => `  - [${e.date}] ${e.summary}`)
+        .join('\n');
+    return `You are a developer journaling assistant. Generate a concise weekly summary (3-4 sentences) that captures the overall themes and highlights of the week's coding work. Group related activities together and identify the main focus areas. Be specific — avoid generic phrases like "worked on various tasks."
+
+## Daily Entries:
+${dayList}
+
+Write a focused weekly summary that a developer would want to review for a weekly standup or code review meeting.`;
+}
 export async function summarizeSession(context) {
     const config = loadConfig();
     const prompt = buildPrompt(context);
