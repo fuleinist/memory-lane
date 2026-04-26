@@ -137,8 +137,19 @@ export function writeWeekSummary(result) {
     }
     const weekFileName = `${result.weekStart}.md`;
     const weekFilePath = path.join(journalDir, weekFileName);
-    const dayEntries = result.entries
-        .map(e => `- **${e.date}:** ${e.summary}`)
+    // Group entries by date and show per-day count
+    const byDate = new Map();
+    for (const e of result.entries) {
+        if (!byDate.has(e.date))
+            byDate.set(e.date, []);
+        byDate.get(e.date).push(e.summary);
+    }
+    const dayEntries = Array.from(byDate.entries())
+        .map(([date, summaries]) => {
+        const count = summaries.length;
+        const summary = count === 1 ? summaries[0] : summaries.join('; ');
+        return `- **${date} (${count} ${count === 1 ? 'entry' : 'entries'}):** ${summary}`;
+    })
         .join('\n');
     const content = `# Week of ${result.weekStart} — ${result.weekEnd}
 
