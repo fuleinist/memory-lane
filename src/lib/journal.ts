@@ -194,8 +194,9 @@ export function writeWeekSummary(result: WeekSummaryResult): void {
     .map(([d, c]) => `- **${d}:** ${c} ${c === 1 ? 'entry' : 'entries'}`)
     .join('\n');
 
+  // Emit per-day count alongside summary in entry details
   const dayEntries = result.entries
-    .map(e => `- **${e.date}:** ${e.summary}`)
+    .map(e => `- **${e.date}:** ${dayCounts[e.date]} ${dayCounts[e.date] === 1 ? 'entry' : 'entries'} — ${e.summary}`)
     .join('\n');
 
   const content = `# Week of ${result.weekStart} — ${result.weekEnd}

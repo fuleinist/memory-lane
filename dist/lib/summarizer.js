@@ -24,6 +24,31 @@ ${dayList}
 
 Write a focused weekly summary that a developer would want to review for a weekly standup or code review meeting.`;
 }
+function buildMonthPrompt(entries) {
+    const dayList = entries
+        .map(e => `  - [${e.date}] ${e.summary}`)
+        .join('\n');
+    return `You are a developer journaling assistant. Generate a concise monthly summary (4-5 sentences) that captures the overall themes, major accomplishments, and focus areas of the month. Group related activities together and highlight the most significant work. Be specific — avoid generic phrases like "worked on various tasks."
+
+## Daily Entries:
+${dayList}
+
+Write a focused monthly summary suitable for a monthly report or portfolio review.`;
+}
+export async function summarizeMonth(entries) {
+    const config = loadConfig();
+    const prompt = buildMonthPrompt(entries);
+    if (config.provider === 'ollama') {
+        return await callOllama(prompt, config);
+    }
+    else if (config.provider === 'openai') {
+        return await callOpenAI(prompt, config);
+    }
+    else if (config.provider === 'anthropic') {
+        return await callAnthropic(prompt, config);
+    }
+    throw new Error(`Unknown provider: ${config.provider}`);
+}
 export async function summarizeSession(context) {
     const config = loadConfig();
     const prompt = buildPrompt(context);
