@@ -59,6 +59,11 @@ Scans git activity since your last run and generates a journal entry:
 - Generates AI summary of your session
 - Appends to `journal/YYYY-MM-DD.md`
 
+**Options:**
+- `--date <YYYY-MM-DD>` — Backfill a journal entry for a past date. Useful when you forgot to run MemoryLane after working on a previous day.
+- `--dry-run` — Preview what would be journaled without saving the entry.
+- `--week` — Generate a weekly summary instead of a daily entry.
+
 ### `memory-lane search <query>`
 Searches all journal entries for matching text. Case-insensitive.
 
