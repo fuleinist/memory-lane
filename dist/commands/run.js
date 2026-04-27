@@ -7,11 +7,13 @@ import { format, startOfWeek, endOfWeek } from 'date-fns';
 export const runCommand = new Command('run')
     .description('Run the MemoryLane journaling loop')
     .option('--week', 'Generate a weekly summary instead of a daily entry')
+    .option('--date <date>', 'Journal date in YYYY-MM-DD format (default: today). Use to backfill past days.')
+    .option('--dry-run', 'Preview the journal entry without saving it')
     .action(async (opts) => {
     if (opts.week) {
         return runWeeklySummary();
     }
-    return runDaily();
+    return runDaily(opts.date, opts.dryRun);
 });
 async function runWeeklySummary() {
     console.log('MemoryLane — Generating weekly summary...\n');
@@ -62,8 +64,8 @@ async function runWeeklySummary() {
     }
     console.log('\nDone!');
 }
-async function runDaily() {
-    console.log('MemoryLane running...\n');
+async function runDaily(dateOverride, dryRun) {
+    console.log('MemoryLane running...\n\n');
     // Check we're in a git repo
     const isGit = await isGitRepo();
     if (!isGit) {
@@ -77,8 +79,13 @@ async function runDaily() {
         process.exit(1);
     }
     const config = loadConfig(configDir);
-    const today = format(new Date(), 'yyyy-MM-dd');
-    // Determine start date (last run or midnight today)
+    const today = dateOverride || format(new Date(), 'yyyy-MM-dd');
+    // Validate date format if provided
+    if (dateOverride && !/^\d{4}-\d{2}-\d{2}$/.test(dateOverride)) {
+        console.error('Error: --date must be in YYYY-MM-DD format.');
+        process.exit(1);
+    }
+    // Determine start date (last run or midnight of target date)
     const lastRun = readLastRunFile(configDir);
     const sinceDate = lastRun || `${today}T00:00:00`;
     console.log(`Scanning git activity since: ${sinceDate}`);
@@ -96,7 +103,8 @@ async function runDaily() {
     const hasChanges = context.changes.length > 0;
     if (!hasCommits && !hasChanges) {
         console.log('No activity detected since last run. Nothing to journal.');
-        writeLastRunFile(configDir, new Date().toISOString());
+        if (!dryRun)
+            writeLastRunFile(configDir, new Date().toISOString());
         return;
     }
     console.log(`Found ${context.commits.length} commits and ${context.changes.length} uncommitted changes.`);
@@ -110,6 +118,15 @@ async function runDaily() {
         process.exit(1);
     }
     console.log(`\nAI Summary: ${summary}`);
+    if (dryRun) {
+        console.log('\n[Dry run] Journal entry NOT saved.');
+        console.log(`\nWould write to journal/${today}.md:`);
+        const changeList = context.changes.length > 0
+            ? context.changes.map(c => `  - \`${c.file}\` — ${c.status}`).join('\n')
+            : '  (no file changes detected)';
+        console.log(`\n## ${today}\n\n**Summary:** ${summary}\n\n**Changes:**\n${changeList}\n`);
+        return;
+    }
     // Append to journal
     const entry = {
         date: today,
