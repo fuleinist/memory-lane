@@ -8,11 +8,12 @@ import { format, startOfWeek, endOfWeek } from 'date-fns';
 export const runCommand = new Command('run')
   .description('Run the MemoryLane journaling loop')
   .option('--week', 'Generate a weekly summary instead of a daily entry')
-  .action(async (opts: { week?: boolean }) => {
+  .option('--dry-run', 'Show what would be journaled without writing anything')
+  .action(async (opts: { week?: boolean; dryRun?: boolean }) => {
     if (opts.week) {
       return runWeeklySummary();
     }
-    return runDaily();
+    return runDaily(opts.dryRun);
   });
 
 async function runWeeklySummary() {
@@ -73,7 +74,7 @@ async function runWeeklySummary() {
   console.log('\nDone!');
 }
 
-async function runDaily() {
+async function runDaily(dryRun: boolean = false) {
   console.log('MemoryLane running...\n');
 
   // Check we're in a git repo
@@ -114,7 +115,7 @@ async function runDaily() {
 
   if (!hasCommits && !hasChanges) {
     console.log('No activity detected since last run. Nothing to journal.');
-    writeLastRunFile(configDir, new Date().toISOString());
+    if (!dryRun) writeLastRunFile(configDir, new Date().toISOString());
     return;
   }
 
@@ -130,6 +131,11 @@ async function runDaily() {
   }
 
   console.log(`\nAI Summary: ${summary}`);
+
+  if (dryRun) {
+    console.log('\n[Dry-run] Would append the above summary to journal.');
+    return;
+  }
 
   // Append to journal
   const entry = {
