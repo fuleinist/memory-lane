@@ -115,6 +115,44 @@ export function searchJournal(query: string, options: SearchOptions = {}): Array
   return results;
 }
 
+export interface AllEntriesOptions extends SearchOptions {
+  query?: string;
+}
+
+export function getAllEntries(options: AllEntriesOptions = {}): Array<{ date: string; line: string; lineNum: number }> {
+  const { from, to, query } = options;
+  const results: Array<{ date: string; line: string; lineNum: number }> = [];
+  const configDir = findConfigDir();
+  if (!configDir) {
+    return [];
+  }
+  const config = loadConfig(configDir);
+  const journalDir = path.join(configDir, config.journalDir);
+
+  if (!fs.existsSync(journalDir)) {
+    return [];
+  }
+
+  const regex = query ? new RegExp(query, 'i') : null;
+  const files = fs.readdirSync(journalDir).filter(f => f.endsWith('.md'));
+
+  for (const file of files) {
+    const fileDate = file.replace('.md', '');
+    if (from && fileDate < from) continue;
+    if (to && fileDate > to) continue;
+
+    const filePath = path.join(journalDir, file);
+    const lines = fs.readFileSync(filePath, 'utf-8').split('\n');
+    lines.forEach((line, idx) => {
+      if (!regex || regex.test(line)) {
+        results.push({ date: fileDate, line: line.trim(), lineNum: idx + 1 });
+      }
+    });
+  }
+
+  return results;
+}
+
 export function initJournalDir(dir: string, journalDir: string): void {
   const fullPath = path.join(dir, journalDir);
   if (!fs.existsSync(fullPath)) {
