@@ -60,7 +60,7 @@ export async function getDiffForFiles(files: string[]): Promise<string> {
   let diff = '';
   for (const file of files) {
     try {
-      const fileDiff = await git.diff([file]);
+      const fileDiff = await git.diff(['--', file]);
       const lines = fileDiff.split('\n').slice(0, 50).join('\n');
       diff += `\n--- ${file} ---\n${lines}\n`;
     } catch {
