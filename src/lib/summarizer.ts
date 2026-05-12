@@ -35,6 +35,40 @@ ${dayList}
 Write a focused weekly summary that a developer would want to review for a weekly standup or code review meeting.`;
 }
 
+export interface GitSummaryOptions {
+  includeCommits?: boolean;
+  includeChanges?: boolean;
+  includeDiff?: boolean;
+}
+
+export function generateGitSummary(context: SessionContext, opts: GitSummaryOptions = {}): string {
+  const parts: string[] = [];
+
+  if (context.commits.length > 0) {
+    const commitMessages = context.commits.map(c => c.message.split('\n')[0]);
+    if (opts.includeCommits !== false) {
+      parts.push(`Worked on: ${commitMessages.join('; ')}`);
+    }
+  }
+
+  if (context.changes.length > 0) {
+    const fileList = context.changes.map(c => `\`${c.file}\` (${c.status})`).join(', ');
+    parts.push(`Changed: ${fileList}`);
+  }
+
+  if (opts.includeDiff && context.uncommittedDiff) {
+    const added = (context.uncommittedDiff.match(/\+[^+]/g) || []).length;
+    const removed = (context.uncommittedDiff.match(/-[^--]/g) || []).length;
+    parts.push(`(+${added}, -${removed} lines)`);
+  }
+
+  if (parts.length === 0) {
+    return 'Git summary unavailable — no activity detected.';
+  }
+
+  return parts.join(' | ');
+}
+
 export async function summarizeSession(context: SessionContext): Promise<string> {
   const config = loadConfig();
 

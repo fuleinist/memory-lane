@@ -2,18 +2,19 @@ import { Command } from 'commander';
 import { loadConfig, findConfigDir } from '../lib/config.js';
 import { getSessionContext, readLastRunFile, writeLastRunFile, isGitRepo } from '../lib/git.js';
 import { appendEntry, getWeekEntries, writeWeekSummary } from '../lib/journal.js';
-import { summarizeSession, summarizeWeek } from '../lib/summarizer.js';
+import { summarizeSession, summarizeWeek, generateGitSummary } from '../lib/summarizer.js';
 import { format, startOfWeek, endOfWeek } from 'date-fns';
 
 export const runCommand = new Command('run')
   .description('Run the MemoryLane journaling loop')
   .option('--week', 'Generate a weekly summary instead of a daily entry')
   .option('--dry-run', 'Show what would be journaled without writing anything')
-  .action(async (opts: { week?: boolean; dryRun?: boolean }) => {
+  .option('--no-ai', 'Skip LLM call and generate a git-only summary')
+  .action(async (opts: { week?: boolean; dryRun?: boolean; noAi?: boolean }) => {
     if (opts.week) {
       return runWeeklySummary();
     }
-    return runDaily(opts.dryRun);
+    return runDaily(opts.dryRun, opts.noAi);
   });
 
 async function runWeeklySummary() {
@@ -74,7 +75,7 @@ async function runWeeklySummary() {
   console.log('\nDone!');
 }
 
-async function runDaily(dryRun: boolean = false) {
+async function runDaily(dryRun: boolean = false, noAi: boolean = false) {
   console.log('MemoryLane running...\n');
 
   // Check we're in a git repo
@@ -121,16 +122,22 @@ async function runDaily(dryRun: boolean = false) {
 
   console.log(`Found ${context.commits.length} commits and ${context.changes.length} uncommitted changes.`);
 
-  // Summarize with LLM
+  // Summarize
   let summary: string;
-  try {
-    summary = await summarizeSession(context);
-  } catch (err) {
-    console.error('Error calling LLM:', (err as Error).message);
-    process.exit(1);
+  if (noAi) {
+    summary = generateGitSummary(context);
+    console.log(`Git Summary (no LLM): ${summary}`);
+  } else {
+    try {
+      summary = await summarizeSession(context);
+      console.log(`\nAI Summary: ${summary}`);
+    } catch (err) {
+      console.error('Error calling LLM:', (err as Error).message);
+      console.log('Falling back to git-only summary...');
+      summary = generateGitSummary(context);
+      console.log(`Git Summary (LLM failed): ${summary}`);
+    }
   }
-
-  console.log(`\nAI Summary: ${summary}`);
 
   if (dryRun) {
     console.log('\n[Dry-run] Would append the above summary to journal.');

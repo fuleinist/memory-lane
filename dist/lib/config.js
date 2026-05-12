@@ -31,7 +31,7 @@ export function getDefaultConfig() {
         provider: 'ollama',
         ollama: {
             url: 'http://localhost:11434',
-            model: 'llama3'
+            model: 'llama3.2'
         },
         journalDir: 'journal',
         excludePatterns: ['**/node_modules/**', '**/.git/**']
