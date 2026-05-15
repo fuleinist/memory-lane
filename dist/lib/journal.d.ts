@@ -17,6 +17,14 @@ export declare function searchJournal(query: string, options?: SearchOptions): A
     line: string;
     lineNum: number;
 }>;
+export interface AllEntriesOptions extends SearchOptions {
+    query?: string;
+}
+export declare function getAllEntries(options?: AllEntriesOptions): Array<{
+    date: string;
+    line: string;
+    lineNum: number;
+}>;
 export declare function initJournalDir(dir: string, journalDir: string): void;
 export declare function getWeekEntries(weekStart: string, weekEnd: string): WeekSummaryEntry[];
 export declare function writeWeekSummary(result: WeekSummaryResult): void;
