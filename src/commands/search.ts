@@ -8,11 +8,18 @@ export const searchCommand = new Command('search')
   .option('--from <date>', 'Filter entries from this date (YYYY-MM-DD)')
   .option('--to <date>', 'Filter entries up to this date (YYYY-MM-DD)')
   .option('--stats', 'Show search statistics before results')
-  .action(async (query: string, opts: SearchOptions & { stats?: boolean }) => {
+  .option('--json', 'Output results as JSON for scripting')
+  .action(async (query: string, opts: SearchOptions & { stats?: boolean; json?: boolean }) => {
     if (opts.stats) {
       printSearchStats(query, opts);
     }
+
     const results = searchJournal(query, opts);
+
+    if (opts.json) {
+      console.log(JSON.stringify({ query, count: results.length, results }, null, 2));
+      return;
+    }
 
     if (results.length === 0) {
       console.log(`No entries found matching: "${query}"`);
