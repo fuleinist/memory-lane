@@ -35,17 +35,76 @@ export async function getUncommittedChanges(): Promise<GitChange[]> {
   const status = await git.status();
   const changes: GitChange[] = [];
 
+  // Get numstat for additions/deletions counts
+  let numstat: Record<string, { additions: number; deletions: number }> = {};
+  try {
+    const statOutput = await git.diff(['--numstat', '--cached']);
+    for (const line of statOutput.split('\n')) {
+      const parts = line.split('\t');
+      if (parts.length >= 3) {
+        const file = parts[2];
+        numstat[file] = { additions: parseInt(parts[0], 10) || 0, deletions: parseInt(parts[1], 10) || 0 };
+      }
+    }
+  } catch {
+    // ignore - might be no staged changes
+  }
+  try {
+    const statOutput = await git.diff(['--numstat']);
+    for (const line of statOutput.split('\n')) {
+      const parts = line.split('\t');
+      if (parts.length >= 3) {
+        const file = parts[2];
+        numstat[file] = { additions: parseInt(parts[0], 10) || 0, deletions: parseInt(parts[1], 10) || 0 };
+      }
+    }
+  } catch {
+    // ignore
+  }
+  try {
+    const statOutput = await git.diff(['--numstat', '--staged']);
+    for (const line of statOutput.split('\n')) {
+      const parts = line.split('\t');
+      if (parts.length >= 3) {
+        const file = parts[2];
+        numstat[file] = { additions: parseInt(parts[0], 10) || 0, deletions: parseInt(parts[1], 10) || 0 };
+      }
+    }
+  } catch {
+    // ignore
+  }
+
   for (const file of status.modified) {
-    changes.push({ file, status: 'modified' });
+    changes.push({ 
+      file, 
+      status: 'modified',
+      additions: numstat[file]?.additions,
+      deletions: numstat[file]?.deletions
+    });
   }
   for (const file of status.created) {
-    changes.push({ file, status: 'added' });
+    changes.push({ 
+      file, 
+      status: 'added',
+      additions: numstat[file]?.additions,
+      deletions: numstat[file]?.deletions
+    });
   }
   for (const file of status.deleted) {
-    changes.push({ file, status: 'deleted' });
+    changes.push({ 
+      file, 
+      status: 'deleted',
+      additions: numstat[file]?.additions,
+      deletions: numstat[file]?.deletions
+    });
   }
   for (const file of status.renamed) {
-    changes.push({ file: file.to, status: 'renamed' });
+    changes.push({ 
+      file: file.to, 
+      status: 'renamed',
+      additions: numstat[file.to]?.additions,
+      deletions: numstat[file.to]?.deletions
+    });
   }
 
   return changes;
