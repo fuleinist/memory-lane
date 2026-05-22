@@ -65,7 +65,12 @@ export function appendEntry(entry: JournalEntry): void {
 
 function formatEntry(entry: JournalEntry): string {
   const changeList = entry.changes.length > 0
-    ? entry.changes.map(c => `  - \`${c.file}\` — ${c.status}`).join('\n')
+    ? entry.changes.map(c => {
+        const stats = (c.additions !== undefined || c.deletions !== undefined)
+          ? ` (+${c.additions ?? 0}, -${c.deletions ?? 0})`
+          : '';
+        return `  - \`${c.file}\` — ${c.status}${stats}`;
+      }).join('\n')
     : '  (no file changes detected)';
 
   return `## ${entry.date}
