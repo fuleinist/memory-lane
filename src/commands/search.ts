@@ -2,6 +2,12 @@ import { Command } from 'commander';
 import { searchJournal } from '../lib/journal.js';
 import type { SearchOptions } from '../types.js';
 
+interface SearchResult {
+  date: string;
+  lineNum: number;
+  line: string;
+}
+
 export const searchCommand = new Command('search')
   .description('Search the journal for entries matching a query')
   .argument('<query>', 'Search query (case-insensitive)')
@@ -10,11 +16,11 @@ export const searchCommand = new Command('search')
   .option('--stats', 'Show search statistics before results')
   .option('--json', 'Output results as JSON for scripting')
   .action(async (query: string, opts: SearchOptions & { stats?: boolean; json?: boolean }) => {
-    if (opts.stats) {
-      printSearchStats(query, opts);
-    }
-
     const results = searchJournal(query, opts);
+
+    if (opts.stats) {
+      printSearchStatsWithResults(results);
+    }
 
     if (opts.json) {
       console.log(JSON.stringify({ query, count: results.length, results }, null, 2));
@@ -32,10 +38,7 @@ export const searchCommand = new Command('search')
     }
   });
 
-function printSearchStats(query: string, opts: SearchOptions): void {
-  const { from, to } = opts;
-  const allResults = searchJournal(query, { from, to });
-
+function printSearchStatsWithResults(allResults: SearchResult[]): void {
   if (allResults.length === 0) {
     console.log('Search Statistics: no matches found.\n');
     return;
