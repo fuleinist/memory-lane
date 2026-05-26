@@ -3,6 +3,7 @@ import { Command } from 'commander';
 import { initCommand } from './commands/init.js';
 import { runCommand } from './commands/run.js';
 import { searchCommand } from './commands/search.js';
+import { githubCommand } from './commands/github.js';
 const program = new Command();
 program
     .name('memory-lane')
@@ -10,6 +11,7 @@ program
     .version('0.1.0')
     .addCommand(initCommand)
     .addCommand(runCommand)
-    .addCommand(searchCommand);
+    .addCommand(searchCommand)
+    .addCommand(githubCommand);
 program.parse();
 //# sourceMappingURL=index.js.map

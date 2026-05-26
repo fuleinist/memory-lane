@@ -41,6 +41,22 @@ async function runWeeklySummary() {
         process.exit(1);
     }
     console.log(`Found ${entries.length} journal ${entries.length === 1 ? 'entry' : 'entries'} for this week.`);
+    // Build per-day count map
+    const dayCount = {};
+    for (const e of entries) {
+        dayCount[e.date] = (dayCount[e.date] || 0) + 1;
+    }
+    console.log(`\nPer-day entry count:`);
+    const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+    let current = weekStart;
+    for (let i = 0; i < 7; i++) {
+        const dayStr = format(current, 'yyyy-MM-dd');
+        const label = days[i];
+        const count = dayCount[dayStr] || 0;
+        console.log(`  ${label} (${dayStr}): ${count} ${count === 1 ? 'entry' : 'entries'}`);
+        current = new Date(current);
+        current.setDate(current.getDate() + 1);
+    }
     let summary;
     try {
         summary = await summarizeWeek(entries);
