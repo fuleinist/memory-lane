@@ -18,10 +18,6 @@ export const searchCommand = new Command('search')
   .action(async (query: string, opts: SearchOptions & { stats?: boolean; json?: boolean }) => {
     const results = searchJournal(query, opts);
 
-    if (opts.stats) {
-      printSearchStatsWithResults(results);
-    }
-
     if (opts.json) {
       console.log(JSON.stringify({ query, count: results.length, results }, null, 2));
       return;
@@ -32,7 +28,17 @@ export const searchCommand = new Command('search')
       return;
     }
 
-    console.log(`Found ${results.length} matches:\n`);
+    // Inline stats: single line summary before results (when --stats not explicitly set)
+    if (!opts.stats) {
+      const dates = [...new Set(results.map(r => r.date))];
+      const rangeStart = dates[0];
+      const rangeEnd = dates[dates.length - 1];
+      console.log(`Found ${results.length} match${results.length !== 1 ? 'es' : ''} across ${dates.length} day${dates.length !== 1 ? 's' : ''} (${rangeStart}→${rangeEnd}):`);
+    } else {
+      printSearchStatsWithResults(results);
+    }
+
+    console.log();
     for (const result of results) {
       console.log(`[${result.date}:${result.lineNum}] ${result.line}`);
     }

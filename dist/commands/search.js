@@ -8,9 +8,6 @@ export const searchCommand = new Command('search')
     .option('--stats', 'Show search statistics before results')
     .option('--json', 'Output results as JSON for scripting')
     .action(async (query, opts) => {
-    if (opts.stats) {
-        printSearchStats(query, opts);
-    }
     const results = searchJournal(query, opts);
     if (opts.json) {
         console.log(JSON.stringify({ query, count: results.length, results }, null, 2));
@@ -20,14 +17,22 @@ export const searchCommand = new Command('search')
         console.log(`No entries found matching: "${query}"`);
         return;
     }
-    console.log(`Found ${results.length} matches:\n`);
+    // Inline stats: single line summary before results (when --stats not explicitly set)
+    if (!opts.stats) {
+        const dates = [...new Set(results.map(r => r.date))];
+        const rangeStart = dates[0];
+        const rangeEnd = dates[dates.length - 1];
+        console.log(`Found ${results.length} match${results.length !== 1 ? 'es' : ''} across ${dates.length} day${dates.length !== 1 ? 's' : ''} (${rangeStart}→${rangeEnd}):`);
+    }
+    else {
+        printSearchStatsWithResults(results);
+    }
+    console.log();
     for (const result of results) {
         console.log(`[${result.date}:${result.lineNum}] ${result.line}`);
     }
 });
-function printSearchStats(query, opts) {
-    const { from, to } = opts;
-    const allResults = searchJournal(query, { from, to });
+function printSearchStatsWithResults(allResults) {
     if (allResults.length === 0) {
         console.log('Search Statistics: no matches found.\n');
         return;
