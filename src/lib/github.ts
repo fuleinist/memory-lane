@@ -113,7 +113,7 @@ export function formatGitHubActivitySummary(activities: GitHubActivity[]): strin
 
   const parts: string[] = [];
   for (const [type, items] of Object.entries(byType)) {
-    const label = type === 'commit' ? 'commits' : type === 'issue' ? 'issues' : type;
+    const label = type === 'commit' ? 'commits' : type === 'issue' ? 'issues' : type === 'pr' ? 'prs' : type === 'release' ? 'releases' : type;
     parts.push(`${items.length} ${label}`);
   }
 
