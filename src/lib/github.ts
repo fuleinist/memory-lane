@@ -113,8 +113,9 @@ export function formatGitHubActivitySummary(activities: GitHubActivity[]): strin
 
   const parts: string[] = [];
   for (const [type, items] of Object.entries(byType)) {
-    const label = type === 'commit' ? 'commits' : type === 'issue' ? 'issues' : type === 'pr' ? 'prs' : type === 'release' ? 'releases' : type;
-    parts.push(`${items.length} ${label}`);
+    const singular = type === 'commit' ? 'commit' : type === 'issue' ? 'issue' : type === 'pr' ? 'pr' : type === 'release' ? 'release' : type;
+    const plural = singular + (singular.endsWith('s') ? '' : 's');
+    parts.push(`${items.length} ${items.length === 1 ? singular : plural}`);
   }
 
   return `GitHub activity: ${parts.join(', ')}.`;
