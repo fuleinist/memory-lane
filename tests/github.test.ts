@@ -16,7 +16,7 @@ describe('GitHub module', () => {
         date: '2026-05-28T10:00:00Z',
         author: 'dev',
       }]);
-      expect(result).toBe('GitHub activity: 1 commits.');
+      expect(result).toBe('GitHub activity: 1 commit.');
     });
 
     it('formats multiple commits', () => {
@@ -33,7 +33,7 @@ describe('GitHub module', () => {
         { type: 'issue' as const, title: '#1 bug', url: 'y', date: '2026-05-27T10:00:00Z', author: 'user' },
         { type: 'issue' as const, title: '#2 feat', url: 'z', date: '2026-05-26T10:00:00Z', author: 'user' },
       ]);
-      expect(result).toBe('GitHub activity: 1 commits, 2 issues.');
+      expect(result).toBe('GitHub activity: 1 commit, 2 issues.');
     });
 
     it('handles only issues', () => {
@@ -57,7 +57,7 @@ describe('GitHub module', () => {
       const result = formatGitHubActivitySummary([
         { type: 'release' as const, title: 'v1.0', url: 'u', date: '2026-05-28T10:00:00Z', author: 'a' },
       ]);
-      expect(result).toBe('GitHub activity: 1 releases.');
+      expect(result).toBe('GitHub activity: 1 release.');
     });
 
     it('handles all four types together', () => {
@@ -68,7 +68,7 @@ describe('GitHub module', () => {
         { type: 'release' as const, title: 'v1.0', url: 'u4', date: '2026-05-25T10:00:00Z', author: 'd' },
       ]);
       // 1 commit, 1 issue, 1 PR, 1 release
-      expect(result).toBe('GitHub activity: 1 commits, 1 issues, 1 prs, 1 releases.');
+      expect(result).toBe('GitHub activity: 1 commit, 1 issue, 1 pr, 1 release.');
     });
   });
 });
