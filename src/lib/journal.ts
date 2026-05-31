@@ -99,7 +99,8 @@ export function searchJournal(query: string, options: SearchOptions = {}): Array
     return [];
   }
 
-  const regex = new RegExp(query, 'i');
+  const escapedQuery = query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  const regex = new RegExp(escapedQuery, 'i');
   const files = fs.readdirSync(journalDir).filter(f => f.endsWith('.md'));
 
   for (const file of files) {
@@ -138,7 +139,8 @@ export function getAllEntries(options: AllEntriesOptions = {}): Array<{ date: st
     return [];
   }
 
-  const regex = query ? new RegExp(query, 'i') : null;
+  const escapedQuery = query ? query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') : null;
+  const regex = escapedQuery ? new RegExp(escapedQuery, 'i') : null;
   const files = fs.readdirSync(journalDir).filter(f => f.endsWith('.md'));
 
   for (const file of files) {
